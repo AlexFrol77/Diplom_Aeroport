@@ -1,0 +1,14 @@
+*.exe
+*.vs
+*.filters
+*.user
+*.pdb
+*.ilk
+*.Builds
+
+.vscode
+.Builds
+*.json
+x64
+out
+Builds
