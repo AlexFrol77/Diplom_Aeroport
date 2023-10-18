@@ -38,11 +38,15 @@ void MainWindow::ReceivStatusConnect(bool status)
         ui->lb_statusConnect->setText("База данных успешно подключена");
         ui->lb_statusConnect->setStyleSheet("color : green");
         db->SendRequest(request);
+        ui->rb_arrival->setEnabled(true);
+        ui->rb_departure->setEnabled(true);
         ui->pb_receive->setEnabled(true);
     } else {
         ui->lb_statusConnect->setText("Не удалось подключиться к базе данных");
         ui->lb_statusConnect->setStyleSheet("color : red");
         timer->start(5000);
+        ui->rb_arrival->setEnabled(false);
+        ui->rb_departure->setEnabled(false);
         ui->pb_receiverFlight->setEnabled(false);
         ui->pb_receive->setEnabled(false);
         qDebug() << "Overload connect";
@@ -156,6 +160,8 @@ void MainWindow::closeConnect()
 {
     ui->lb_statusConnect->setText("Подключение к базе данных разорвано");
     ui->lb_statusConnect->setStyleSheet("color : red");
+    ui->rb_arrival->setEnabled(false);
+    ui->rb_departure->setEnabled(false);
     ui->pb_receiverFlight->setEnabled(false);
     ui->pb_receive->setEnabled(false);
 }

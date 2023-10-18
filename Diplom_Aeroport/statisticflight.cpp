@@ -63,7 +63,9 @@ void StatisticFlight::ViewStaticYear(QSqlQueryModel *answerStatic)
         QModelIndex idxDate = answerStatic->index(i, 1);
         yValue.append(answerStatic->data(idxFlight, Qt::DisplayRole).toDouble());
         xDate.append(count++);
-        xList.append(answerStatic->data(idxDate, Qt::DisplayRole).toDate().toString());
+        QVariant monthInt = answerStatic->data(idxDate, Qt::DisplayRole).toDate().month();
+        QVariant yearInt = answerStatic->data(idxDate, Qt::DisplayRole).toDate().year();
+        xList.append(listMonth[monthInt.toInt() - 1] + " . " + yearInt.toString());
     }
 
     double maxYear = static_cast<double>(*std::max_element(std::begin(yValue), std::end(yValue)));
