@@ -4,7 +4,6 @@ DataBase::DataBase(QObject *parent)
     : QObject{parent}
 {
     dataBase = new QSqlDatabase();
-
     queryModel = new QSqlQueryModel;
     queryModelFlight = new QSqlQueryModel;
     queryModelStatic = new QSqlQueryModel;
@@ -19,8 +18,7 @@ DataBase::~DataBase()
     delete queryModelStatic;
 }
 
-void DataBase::QueryConnect(QString nameDb) {
-    *dataBase = QSqlDatabase::database(nameDb);
+void DataBase::QueryConnect() {
     dataBase->setHostName("981757-ca08998.tmweb.ru");
     dataBase->setDatabaseName("demo");
     dataBase->setUserName("netology_usr_cpp");
@@ -36,7 +34,6 @@ void DataBase::QueryConnect(QString nameDb) {
 void DataBase::SendRequest(QString request) {
 
     queryModel->setQuery(request, *dataBase);
-    qDebug() << dataBase->lastError().text();
     emit sig_SendAnswerNameAeroport(queryModel);
 }
 

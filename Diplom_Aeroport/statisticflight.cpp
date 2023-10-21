@@ -2,12 +2,12 @@
 #include "qsqlrecord.h"
 #include "ui_statisticflight.h"
 
-StatisticFlight::StatisticFlight(QWidget *parent) :
+StatisticFlight::StatisticFlight(DataBase *db, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::StatisticFlight)
 {
     ui->setupUi(this);
-    dbStatist = new DataBase();
+    dbStatist = db;
 
     statisticFlight = new QCPBars(ui->customPlot->xAxis, ui->customPlot->yAxis);
     statisticFlight->setBrush(QColor(0, 168, 140));
@@ -16,13 +16,10 @@ StatisticFlight::StatisticFlight(QWidget *parent) :
     connect(dbStatist, &DataBase::sig_SendAnswerStaticYear, this, &StatisticFlight::ViewStaticYear);
     connect(dbStatist, &DataBase::sig_SendAnswerStaticDay, this, &StatisticFlight::ViewStaticDay);
     connect(ui->cb_listMonth, &QComboBox::currentTextChanged, this, &StatisticFlight::RequestStaticDay);
+    connect(ui->cb_listNameAiroport, &QComboBox::currentTextChanged, this, &StatisticFlight::RequestStaticDay);
 
     listMonth << "Январь" << "Февраль" << "Март" << "Апрель" << "Май" << "Июнь" << "Июль" << "Август" << "Сентябрь" << "Октябрь"
-           << "Ноябрь" << "Декабрь";
-    ui->cb_listMonth->addItems(listMonth);
-
-    RequestStaticDay();
-
+              << "Ноябрь" << "Декабрь";
 }
 
 StatisticFlight::~StatisticFlight()
@@ -31,16 +28,16 @@ StatisticFlight::~StatisticFlight()
     delete dbStatist;
 }
 
-void StatisticFlight::initNameAiroport()
+void StatisticFlight::initStatistic()
 {
     dbStatist->SendRequest(requestNameAiroport);
-    RequestStaticDay();
+    ui->cb_listMonth->addItems(listMonth);
     this->show();
 }
 
 void StatisticFlight::on_pb_close_clicked()
 {
-    emit sig_newConnectDb();
+    emit sig_close();
     this->close();
 }
 
@@ -111,6 +108,11 @@ void StatisticFlight::MakeGraphStatist(double maxValue)
     statisticFlight->setData(xDate, yValue);
     ui->customPlot->rescaleAxes();
     ui->customPlot->replot();
+}
+
+void StatisticFlight::closeEvent(QCloseEvent *bar)
+{
+    emit sig_close();
 }
 
 void StatisticFlight::on_pb_StaticYear_clicked()

@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     db = new DataBase(this);
-    staticFlight = new StatisticFlight();
+    staticFlight = new StatisticFlight(db);
     timer = new QTimer(this);
 
     connect(db, &DataBase::sig_SendStatusConnect, this, &MainWindow::ReceivStatusConnect);
@@ -16,20 +16,20 @@ MainWindow::MainWindow(QWidget *parent)
     connect(db, &DataBase::sig_SendAnswerFlight, this, &MainWindow::ReceiveAnswerFlight);
     connect(ui->rb_arrival, &QRadioButton::toggled, this, &MainWindow::EnableButtonQueryFlight);
     connect(ui->rb_departure, &QRadioButton::toggled, this, &MainWindow::EnableButtonQueryFlight);
-    connect(staticFlight, &StatisticFlight::sig_newConnectDb, this, &MainWindow::enableWindows);
+    connect(staticFlight, &StatisticFlight::sig_close, this, &MainWindow::enableWindows);
     connect(db, &DataBase::sig_CloseConnect, this, &MainWindow::closeConnect);
     connect(timer, &QTimer::timeout, this, &MainWindow::initConnect);
     ui->pb_receiverFlight->setEnabled(false);
     ui->pb_receive->setEnabled(false);
 
     initConnect();
+
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete db;
-    delete staticFlight;
+    delete db;    
 }
 
 void MainWindow::ReceivStatusConnect(bool status)
@@ -90,7 +90,8 @@ void MainWindow::enableWindows()
 
 void MainWindow::initConnect()
 {
-    db->QueryConnect(NAME_DB_MAIN);
+    auto connectDb = [&]{db->QueryConnect();};
+    QFuture<void> future = QtConcurrent::run(connectDb);
 }
 
 void MainWindow::EnableButtonQueryFlight()
@@ -125,23 +126,21 @@ void MainWindow::on_pb_receiverFlight_clicked()
 
 void MainWindow::on_pb_receive_clicked()
 {
-    staticFlight->initNameAiroport();
+    staticFlight->initStatistic();
     this->setEnabled(false);
 }
 
 
 void MainWindow::on_actionStatistica_triggered()
 {
-    staticFlight->initNameAiroport();
+    staticFlight->initStatistic();
     this->setEnabled(false);
 }
 
 
 void MainWindow::on_actionAbout_triggered()
 {
-
-    QMessageBox::about(0, "About", "Alex Frol \n" "City Moscow \n");
-
+    QMessageBox::about(0, "О программе", "Alex Frol \n" "City Moscow \n");
 }
 
 

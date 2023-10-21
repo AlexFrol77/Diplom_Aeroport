@@ -19,15 +19,15 @@ class StatisticFlight : public QWidget
     Q_OBJECT
 
 public:
-    explicit StatisticFlight(QWidget *parent = nullptr);
+    explicit StatisticFlight(DataBase *db, QWidget *parent = nullptr);
     ~StatisticFlight();
 
-    void initNameAiroport();
+    void initStatistic();
 
 
 signals:
 
-    void sig_newConnectDb();
+    void sig_close();
 
 private slots:
 
@@ -54,6 +54,8 @@ private:
     QVector<QString> listMonth;
 
     void MakeGraphStatist(double maxValue);
+
+    void closeEvent(QCloseEvent *bar);
 
     QString requestNameAiroport = "SELECT airport_name->>'ru', airport_code FROM bookings.airports_data";
     QString requestStatisticYearOne = "SELECT count(flight_no), date_trunc('month', scheduled_departure) from"

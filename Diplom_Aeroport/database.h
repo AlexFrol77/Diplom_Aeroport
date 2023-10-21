@@ -20,7 +20,7 @@ public:
     explicit DataBase(QObject *parent = nullptr);
     ~DataBase();
 
-    void QueryConnect(QString nameDb);
+    void QueryConnect();
 
     void SendRequest(QString request);
     void SendRequestFlight(QString tempRequest);
