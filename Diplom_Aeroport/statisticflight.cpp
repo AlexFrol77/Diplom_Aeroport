@@ -11,6 +11,9 @@ StatisticFlight::StatisticFlight(DataBase *db, QWidget *parent) :
 
     statisticFlight = new QCPBars(ui->customPlot->xAxis, ui->customPlot->yAxis);
     statisticFlight->setBrush(QColor(0, 168, 140));
+    graph = new QCPGraph(ui->customPlot->xAxis, ui->customPlot->yAxis);
+    graph->setBrush(QColor(0, 168, 140, 150));
+    ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 
     connect(dbStatist, &DataBase::sig_SendAnswerNameAeroport, this, &StatisticFlight::ReceiverAnswerNameAiroport);
     connect(dbStatist, &DataBase::sig_SendAnswerStaticYear, this, &StatisticFlight::ViewStaticYear);
@@ -65,8 +68,10 @@ void StatisticFlight::ViewStaticYear(QSqlQueryModel *answerStatic)
         xList.append(listMonth[monthInt.toInt() - 1] + " . " + yearInt.toString());
     }
 
-    double maxYear = static_cast<double>(*std::max_element(std::begin(yValue), std::end(yValue)));
-    MakeGraphStatist(maxYear);
+    if (!yValue.isEmpty()) {
+        maxYear = static_cast<double>(*std::max_element(std::begin(yValue), std::end(yValue)));
+    }
+    MakeGraphStatist(maxYear, flagGraph = false);
 }
 
 void StatisticFlight::ViewStaticDay(QSqlQueryModel *answerStatic)
@@ -92,21 +97,56 @@ void StatisticFlight::ViewStaticDay(QSqlQueryModel *answerStatic)
         }
     }
 
-    MakeGraphStatist(25);
+    if (!yValue.isEmpty()) {
+        maxDay = *std::max_element(std::begin(yValue), std::end(yValue));
+    }
+    MakeGraphStatist(maxDay, flagGraph = true);
 }
 
-void StatisticFlight::MakeGraphStatist(double maxValue)
+void StatisticFlight::MakeGraphStatist(double maxValue, bool flagGraph)
 {
 
-    ui->customPlot->yAxis->setRange(0, maxValue + 25);
+    QSharedPointer<QCPAxisTickerText> textTicker(new QCPAxisTickerText); 
 
-    QSharedPointer<QCPAxisTickerText> textTicker(new QCPAxisTickerText);
+    double lastValueDate = 0;
+    if (!yValue.isEmpty()) {
+        lastValueDate = xDate.last();
+    }
+
+    ui->customPlot->clearItems();
+
+    if (flagGraph) {
+        graph->setData(xDate, yValue);
+        graph->setVisible(flagGraph);
+        statisticFlight->setVisible(!flagGraph);
+        ui->customPlot->xAxis->setRange(-0.5, lastValueDate + 1);
+    }
+    if (!flagGraph) {
+        statisticFlight->setData(xDate, yValue);
+        statisticFlight->setVisible(!flagGraph);
+        graph->setVisible(flagGraph);
+        ui->customPlot->xAxis->setRange(0, lastValueDate + 1);
+    }
+
+    for (int i = 0; i < xDate.size(); i++) {
+        QCPItemText *textLabel = new QCPItemText(ui->customPlot);
+        textLabel->setText(QString::number(yValue[i]));
+        textLabel->position->setType(QCPItemPosition::ptPlotCoords);
+        textLabel->position->setCoords(xDate[i], yValue[i]);
+        textLabel->setFont(QFont(font().family(), 12));
+        QPen* penMax = new QPen;
+        penMax->setWidth(1);
+        penMax->setColor(Qt::red);
+        penMax->setStyle(Qt::SolidLine);
+        textLabel->setPen(*penMax);
+        textLabel->setBrush(QBrush(Qt::white));
+    }
+
     textTicker->addTicks(xDate, xList);
     ui->customPlot->xAxis->setTicker(textTicker);
     ui->customPlot->xAxis->setTickLabelRotation(60);
 
-    statisticFlight->setData(xDate, yValue);
-    ui->customPlot->rescaleAxes();
+    ui->customPlot->yAxis->setRange(0, maxValue + 25);;
     ui->customPlot->replot();
 }
 
@@ -115,20 +155,29 @@ void StatisticFlight::closeEvent(QCloseEvent *bar)
     emit sig_close();
 }
 
-void StatisticFlight::on_pb_StaticYear_clicked()
+QString StatisticFlight::formingRequest(QString calendar)
 {
     int row = ui->cb_listNameAiroport->currentIndex();
     QModelIndex idx = ui->cb_listNameAiroport->model()->index(row, 1);
     QString codeAiroport = ui->cb_listNameAiroport->model()->data(idx, Qt::DisplayRole).toString();
-    QString requestYearTemp = requestStatisticYearOne + codeAiroport + requestStatisticYearTwo + codeAiroport + requestStatisticYearThree;
-    dbStatist->SendRequestStaticYear(requestYearTemp);
+    QString requestTemp = requestStatisticOneCalendar
+                          + calendar
+                          + requestStatisticTwoAiroport
+                          + codeAiroport
+                          + requestStatisticThreeAiroport
+                          + codeAiroport
+                          + requestStatisticFourCalendar
+                          + calendar
+                          + requestStatisticFiveEnd;
+    return requestTemp;
+}
+
+void StatisticFlight::on_pb_StaticYear_clicked()
+{
+    dbStatist->SendRequestStaticYear(formingRequest("month"));
 }
 
 void StatisticFlight::RequestStaticDay()
 {
-    int row = ui->cb_listNameAiroport->currentIndex();
-    QModelIndex idx = ui->cb_listNameAiroport->model()->index(row, 1);
-    QString codeAiroport = ui->cb_listNameAiroport->model()->data(idx, Qt::DisplayRole).toString();
-    QString requestDayTemp = requestStatisticDayOne + codeAiroport + requestStatisticDayTwo + codeAiroport + requestStatisticDayThree;
-    dbStatist->SendRequestStaticDay(requestDayTemp);
+    dbStatist->SendRequestStaticDay(formingRequest("day"));
 }
