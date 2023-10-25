@@ -14,6 +14,10 @@ StatisticFlight::StatisticFlight(DataBase *db, QWidget *parent) :
     graph = new QCPGraph(ui->customPlot->xAxis, ui->customPlot->yAxis);
     graph->setBrush(QColor(0, 168, 140, 150));
     ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+    xAxisFont = new QFont;
+    yAxisFont = new QFont;
+    xAxisFont->setPointSize(12);
+    yAxisFont->setPointSize(12);
 
     connect(dbStatist, &DataBase::sig_SendAnswerNameAeroport, this, &StatisticFlight::ReceiverAnswerNameAiroport);
     connect(dbStatist, &DataBase::sig_SendAnswerStaticYear, this, &StatisticFlight::ViewStaticYear);
@@ -69,14 +73,14 @@ void StatisticFlight::ViewStaticYear(QSqlQueryModel *answerStatic)
     }
 
     if (!yValue.isEmpty()) {
-        maxYear = static_cast<double>(*std::max_element(std::begin(yValue), std::end(yValue)));
+        maxYear = *std::max_element(std::begin(yValue), std::end(yValue));
     }
     MakeGraphStatist(maxYear, flagGraph = false);
 }
 
 void StatisticFlight::ViewStaticDay(QSqlQueryModel *answerStatic)
 {
-    int selectMonth = (ui->cb_listMonth->currentIndex()) + 1;
+    int selectMonthInt = (ui->cb_listMonth->currentIndex()) + 1;
     int count = 0;
 
     xDate.clear();
@@ -88,12 +92,13 @@ void StatisticFlight::ViewStaticDay(QSqlQueryModel *answerStatic)
         QSqlRecord tempDate = answerStatic->record(i);
         QDate dateDateTemp = tempDate.value("date_trunc").toDate();
         int dateIntTemp = dateDateTemp.month();
-        if (selectMonth == dateIntTemp) {
+        if (selectMonthInt == dateIntTemp) {
             QModelIndex idxFlight = answerStatic->index(i, 0);
             QModelIndex idxDate = answerStatic->index(i, 1);
             yValue.append(answerStatic->data(idxFlight, Qt::DisplayRole).toDouble());
             xDate.append(count++);
             xList.append(answerStatic->data(idxDate, Qt::DisplayRole).toDate().toString());
+            selectMonthString = listMonth[selectMonthInt - 1];
         }
     }
 
@@ -120,12 +125,14 @@ void StatisticFlight::MakeGraphStatist(double maxValue, bool flagGraph)
         graph->setVisible(flagGraph);
         statisticFlight->setVisible(!flagGraph);
         ui->customPlot->xAxis->setRange(-0.5, lastValueDate + 1);
+        ui->customPlot->xAxis->setLabel("Статистика аэропорта " + nameAiroport + " за " + selectMonthString);
     }
     if (!flagGraph) {
         statisticFlight->setData(xDate, yValue);
         statisticFlight->setVisible(!flagGraph);
         graph->setVisible(flagGraph);
         ui->customPlot->xAxis->setRange(0, lastValueDate + 1);
+        ui->customPlot->xAxis->setLabel("Статистика аэропорта " + nameAiroport + " за год");
     }
 
     for (int i = 0; i < xDate.size(); i++) {
@@ -139,9 +146,13 @@ void StatisticFlight::MakeGraphStatist(double maxValue, bool flagGraph)
         penMax->setColor(Qt::red);
         penMax->setStyle(Qt::SolidLine);
         textLabel->setPen(*penMax);
+
         textLabel->setBrush(QBrush(Qt::white));
     }
 
+    ui->customPlot->xAxis->setLabelFont(*xAxisFont);
+    ui->customPlot->yAxis->setLabelFont(*yAxisFont);
+    ui->customPlot->yAxis->setLabel("Прилёты Вылеты");
     textTicker->addTicks(xDate, xList);
     ui->customPlot->xAxis->setTicker(textTicker);
     ui->customPlot->xAxis->setTickLabelRotation(60);
@@ -158,8 +169,10 @@ void StatisticFlight::closeEvent(QCloseEvent *bar)
 QString StatisticFlight::formingRequest(QString calendar)
 {
     int row = ui->cb_listNameAiroport->currentIndex();
-    QModelIndex idx = ui->cb_listNameAiroport->model()->index(row, 1);
-    QString codeAiroport = ui->cb_listNameAiroport->model()->data(idx, Qt::DisplayRole).toString();
+    QModelIndex idxCodeAiroport = ui->cb_listNameAiroport->model()->index(row, 1);
+    QModelIndex idxNameAiroport = ui->cb_listNameAiroport->model()->index(row, 0);
+    QString codeAiroport = ui->cb_listNameAiroport->model()->data(idxCodeAiroport, Qt::DisplayRole).toString();
+    nameAiroport = ui->cb_listNameAiroport->model()->data(idxNameAiroport, Qt::DisplayRole).toString();
     QString requestTemp = requestStatisticOneCalendar
                           + calendar
                           + requestStatisticTwoAiroport

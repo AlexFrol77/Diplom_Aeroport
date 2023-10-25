@@ -52,6 +52,10 @@ private:
     QVector<double> xDate;
     QVector<QString> xList;
     QVector<QString> listMonth;
+    QString selectMonthString;
+    QString nameAiroport;
+    QFont* xAxisFont;
+    QFont* yAxisFont;
     double maxDay;
     double maxYear;
     bool flagGraph;
@@ -71,13 +75,6 @@ private:
     QString requestStatisticThreeAiroport = " ' or arrival_airport = '";
     QString requestStatisticFourCalendar = " ' ) GROUP BY date_trunc('";
     QString requestStatisticFiveEnd = "', scheduled_departure)";
-
-//    QString requestStatisticDayOne = "SELECT count(flight_no), date_trunc('day', scheduled_departure) from"
-//                                     " bookings.flights f"
-//                                     " WHERE(scheduled_departure::date > date('2016-08-31') and"
-//                                     " scheduled_departure::date <= date('2017-08-31')) and ( departure_airport = '";
-//    QString requestStatisticDayTwo = "' or arrival_airport = '";
-//    QString requestStatisticDayThree = "') GROUP BY date_trunc('day', scheduled_departure)";
 };
 
 #endif // STATISTICFLIGHT_H
